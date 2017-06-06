@@ -63,8 +63,14 @@ body.landing {
 }
 
 /* #5 */
+
 .links-container .navbar-link:hover {
   color: rgb(233, 50, 117);
+}
+
+.links-container .navbar-link:active {
+  color: rgb(233, 50, 117);
+  background-color: rgb(255, 255, 255);
 }
 
 /* Medium and small screens (640px) */
