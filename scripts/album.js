@@ -30,6 +30,22 @@ var albumMarconi = {
     ]
 };
 
+var albumTesla = {
+    title: 'Many Inventions',
+    artist: 'Nikola Tesla',
+    label: 'High Energy',
+    year: '1891',
+    albumArtUrl: 'assets/images/album_covers/02.png',
+    songs: [
+        { title: 'Tesla Coil', duration: '3:56' },
+        { title: 'Tesla Turbine', duration: '2:33' },
+        { title: 'Wireless Lighting', duration: '4:35' },
+        { title: 'Remote Control', duration: '5:01' },
+        { title: 'Railgun', duration: '2:59' },
+        { title: '300 patents', duration: '4:30' }
+    ]
+};
+
 var createSongRow = function (songNumber, songName, songLength) {
     var template =
         '<tr class="album-view-song-item">'
@@ -49,12 +65,13 @@ var setCurrentAlbum = function (album) {
     var albumReleaseInfo = document.getElementsByClassName("album-view-release-info")[0];
     var albumImage = document.getElementsByClassName("album-cover-art")[0];
     var albumSongList = document.getElementsByClassName("album-view-song-list")[0];
+    var albumImageList = [];
 
     // #2
     albumTitle.firstChild.nodeValue = album.title;
     albumArtist.firstChild.nodeValue = album.artist;
     albumReleaseInfo.firstChild.nodeValue = album.year + ' ' + album.label;
-    albumImage.setAttributes('src', album.albumArtUrl);
+    albumImage.setAttribute('src', album.albumArtUrl);
 
     // #3
     albumSongList.innerHTML = '';
@@ -63,6 +80,25 @@ var setCurrentAlbum = function (album) {
     for (var i = 0; i < album.songs.length; i++) {
         albumSongList.innerHTML += createSongRow(i + 1, album.songs[i].title, album.songs[i].duration);
     }
+    // #5 - sets up code to toggle from one image to another
+    albumImageList.push(albumPicasso.albumArtUrl);
+    albumImageList.push(albumMarconi.albumArtUrl);
+    albumImageList.push(albumTesla.albumArtUrl);
+
+    var imageIndex = 0;
+    for (var i = 0; i < albumImageList.length; i++) {
+        if (album.albumArtUrl === albumImageList[i]) {
+            imageIndex = i;
+        }
+    }
+
+    albumImage.addEventListener("click", function () {
+        imageIndex++;
+        if (imageIndex === albumImageList.length) {
+            imageIndex = 0;
+        }
+        albumImage.setAttribute('src', albumImageList[imageIndex]);
+    });
 };
 
 window.onload = function () {
