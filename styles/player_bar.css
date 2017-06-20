@@ -173,5 +173,9 @@ player-bar .volume {
 }
 
 .player-bar .currently-playing .artist-song-mobile {
-  display: block; 
+  display: block;
+}
+
+.main-controls .previous {
+    color: red;
 }

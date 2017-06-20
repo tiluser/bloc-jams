@@ -1,50 +1,18 @@
-// Example album
-var albumPicasso = {
-    title: "The Colors",
-    artist: "Pablo Picasso",
-    label: "Cubism",
-    year: "1881",
-    albumArtUrl: 'assets/images/album_covers/01.png',
-    songs: [
-        { title: 'Blue', duration: '4:26' },
-        { title: 'Green', duration: '3:14' },
-        { title: 'Red', duration: '5:01' },
-        { title: 'Pink', duration: '3:21' },
-        { title: 'Magenta', duration: '2:15' }
-    ]
-};
+// Album button templates
+var playButtonTemplate = '<a class="album-song-button"><span class="ion-play"></span></a>';
+var pauseButtonTemplate = '<a class="album-song-button"><span class="ion-pause"></span></a>';
+var playerBarPlayButton = '<span class="ion-play"></span>';
+var playerBarPauseButton = '<span class="ion-pause"></span>';
 
-// Another example album
-var albumMarconi = {
-    title: 'The Telephone',
-    artist: 'Guglielmo Marconi',
-    label: 'EM',
-    year: '1909',
-    albumArtUrl: 'assets/images/album_covers/20.png',
-    songs: [
-        { title: 'Hello, Operator?', duration: '1:01' },
-        { title: 'Ring, ring, ring', duration: '5:01' },
-        { title: 'Fits in your pocket', duration: '3:21' },
-        { title: 'Can you hear me now?', duration: '3:14' },
-        { title: 'Wrong phone number', duration: '2:15' }
-    ]
-};
+// Store state of playing songs
+var currentAlbum = null;
+var currentlyPlayingSongNumber = null;
+var currentSongFromAlbum = null;
+var currentArtistFromAlbum = null;
 
-var albumTesla = {
-    title: 'Many Inventions',
-    artist: 'Nikola Tesla',
-    label: 'High Energy',
-    year: '1891',
-    albumArtUrl: 'assets/images/album_covers/02.png',
-    songs: [
-        { title: 'Tesla Coil', duration: '3:56' },
-        { title: 'Tesla Turbine', duration: '2:33' },
-        { title: 'Wireless Lighting', duration: '4:35' },
-        { title: 'Remote Control', duration: '5:01' },
-        { title: 'Railgun', duration: '2:59' },
-        { title: '300 patents', duration: '4:30' }
-    ]
-};
+var $oneButton = $('.main-controls .play-pause');
+var $previousButton = $('.main-controls .previous');
+var $nextButton = $('.main-controls .next');
 
 var createSongRow = function(songNumber, songName, songLength) {
     var template =
@@ -61,7 +29,7 @@ var createSongRow = function(songNumber, songName, songLength) {
         // Placeholder for function logic
        if ($(event.target.parentElement).find('.song-item-number').text() !== ""
               && $(event.target.parentElement).find('.song-item-number').html() !== pauseButtonTemplate) {
-           songItemNumber = $(event.target.parentElement).find('.song-item-number').text();
+           songItemNumber = parseInt($(event.target.parentElement).find('.song-item-number').text());
            $(event.target.parentElement).find('.song-item-number').html(playButtonTemplate);
        }
     };
@@ -71,6 +39,15 @@ var createSongRow = function(songNumber, songName, songLength) {
        if ($(event.target.parentElement).find('.song-item-number').html() !== pauseButtonTemplate) {
            $(event.target.parentElement).find('.song-item-number').html(songItemNumber);
        }
+      // New code - checkpoint 19
+  //     console.log("songNumber type is " + typeOf(songNumber) + "\n and currentlyPlayingSongNumber type is " + typeof(currentlyPlayingSongNumber));
+    };
+
+    // Updates the text of the h2 tags
+    var updatePlayerBarSong = function () {
+        $('.song-name').html(currentSongFromAlbum.title);
+        $('.artist-song-mobile').html(currentSongFromAlbum.title);
+        $('.main-controls .play-pause').html(playerBarPauseButton);
     };
 
     var clickHandler = function () {
@@ -80,6 +57,23 @@ var createSongRow = function(songNumber, songName, songLength) {
         else {
             $(this.parentElement).find('.song-item-number').html(pauseButtonTemplate);
         }
+        // New code - checkpoint 19
+        var songNumber = parseInt($(this).attr('data-song-number'));
+  //      console.log("songNumber type is " + typeOf(songNumber) + "\n and currentlyPlayingSongNumber type is " + typeof(currentlyPlayingSongNumber));
+        if (currentlyPlayingSongNumber !== songNumber) {
+            $(this).html(pauseButtonTemplate);
+            currentlyPlayingSongNumber = songNumber;
+            currentSongFromAlbum = currentAlbum.songs[songNumber - 1];
+      //      alert(currentSongFromAlbum.title);
+            updatePlayerBarSong();
+        }
+        else if (currentlyPlayingSongNumber === songNumber) {
+            $(this).html(playButtonTemplate);
+            $('.main-controls .play-pause').html(playerBarPlayButton);
+            currentlyPlayingSongNumber = null;
+            currentSongFromAlbum = null;
+        }
+
     };
 
     $row.find('.song-item-number').click(clickHandler);
@@ -88,7 +82,7 @@ var createSongRow = function(songNumber, songName, songLength) {
 };
 
 var setCurrentAlbum = function (album) {
-    // #1
+    currentAlbum = album;
     var $albumTitle = $('.album-view-title');
     var $albumArtist = $('.album-view-artist');
     var $albumReleaseInfo = $('.album-view-release-info');
@@ -100,7 +94,8 @@ var setCurrentAlbum = function (album) {
     $albumTitle.text(album.title);
     $albumArtist.text(album.artist);
     $albumReleaseInfo.text(album.year + ' ' + album.label);
-    $albumImage.attr('src', album.albumArtUrl);
+//    $albumImage.attr('src', album.albumArtUrl);
+    $albumImage.setAttribute('src', album.albumArtUrl);
 
     // #3
 //    albumSongList.innerHTML = '';
@@ -123,22 +118,55 @@ var setCurrentAlbum = function (album) {
         }
     }
 
-    albumImage.addEventListener("click", function () {
+    $albumImage.addEventListener("click", function () {
         imageIndex++;
         if (imageIndex === albumImageList.length) {
             imageIndex = 0;
         }
-        albumImage.setAttribute('src', albumImageList[imageIndex]);
+        $albumImage.setAttribute('src', albumImageList[imageIndex]);
     });
+
 };
 
-// Album button templates
-var playButtonTemplate = '<a class="album-song-button"><span class="ion-play"></span></a>';
-var pauseButtonTemplate = '<a class="album-song-button"><span class="ion-pause"></span></a>';
+var trackIndex = function (album, song) {
+    return album.songs.indexOf(song);
+};
 
-// Store state of playing songs
-var currentlyPlayingSong = null;
+var nextSong = function () {
+  /*
+    var previousSongNumber;
+    currentlyPlayingSongNumber = trackIndex(currentAlbum, currentSongFromAlbum);
+    previousSongNumber = currentlyPlayingSongNumber;
+    currentlyPlayingSongNumber++;
+    if (currentlyPlayingSongNumber === currentAlbum.songs.length) {
+        currentlyPlayingSongNumber = 0;
+    }
+    currentSongFromAlbum = currentAlbum.songs[currentlyPlayingSongNumber];
+*/
+    /*
+    if ($(this).find('.song-item-number').text() !== "" && $(this).find('.song-item-number').html() !== pauseButtonTemplate) {
+        songItemNumber = parseInt($(this).find('.song-item-number').text());
+        $(this).find('.song-item-number').html(playButtonTemplate);
+    }
+    */
+    alert('');
+};
+
+var previousSong = function () {
+  /*
+    currentlyPlayingSongNumber = trackIndex(currentAlbum, currentSongFromAlbum);
+    currentlyPlayingSongNumber--;
+    if (currentlyPlayingSongNumber === -1) {
+        currentlyPlayingSongNumber = currentAlbum.songs.length - 1;
+    }
+    currentSongFromAlbum = currentAlbum.songs[currentlyPlayingSongNumber];
+    */
+      alert('');
+};
 
 $(document).ready(function() {
     setCurrentAlbum(albumPicasso);
+    $('.main-controls .previous').addEventListener('click',function () { alert()});
+    $previousButton.click(previousSong);
+    $nextButton.click(function () { alert()} );
 });
