@@ -14,9 +14,15 @@ var $oneButton = $('.main-controls .play-pause');
 var $previousButton = $('.main-controls .previous');
 var $nextButton = $('.main-controls .next');
 
-var setSong = function(songNumber) {
-    currentlyPlayingSongNumber = songNumber;
-    currentSongFromAlbum = currentAlbum.songs[songNumber];
+// Slightly different versions of setSong are needed depending on where it's called.
+// Pass a 1 for the version in the ClickHandler of CreateSongRow, a zero for the
+// next and previous buttons on the navigation var. 
+var setSongFactory = function (subOne) {
+    var setSong = function(songNumber) {
+        currentlyPlayingSongNumber = songNumber;
+        currentSongFromAlbum = currentAlbum.songs[songNumber - subOne];
+    };
+    return setSong;
 };
 
 // Updates the text of the h2 tags
@@ -51,11 +57,10 @@ var createSongRow = function(songNumber, songName, songLength) {
        if ($(event.target.parentElement).find('.song-item-number').html() !== pauseButtonTemplate) {
            $(event.target.parentElement).find('.song-item-number').html(songItemNumber);
        }
-      // New code - checkpoint 19
-  //     console.log("songNumber type is " + typeOf(songNumber) + "\n and currentlyPlayingSongNumber type is " + typeof(currentlyPlayingSongNumber));
     };
 
     var clickHandler = function () {
+        var setSong = setSongFactory(1);
         if ($(this.parentElement).find('.song-item-number').html() === pauseButtonTemplate) {
             $(this.parentElement).find('.song-item-number').html(playButtonTemplate);
         }
@@ -64,13 +69,9 @@ var createSongRow = function(songNumber, songName, songLength) {
         }
         // New code - checkpoint 19
         var songNumber = parseInt($(this).attr('data-song-number'));
-  //      console.log("songNumber type is " + typeOf(songNumber) + "\n and currentlyPlayingSongNumber type is " + typeof(currentlyPlayingSongNumber));
         if (currentlyPlayingSongNumber !== songNumber) {
             $(this).html(pauseButtonTemplate);
             setSong(songNumber);
-            // Behavior will be incorrect here unless currentSongFromAlbum is reset
-            // to be one less than songNumber.
-            currentSongFromAlbum = currentAlbum.songs[songNumber - 1]
         }
         else if (currentlyPlayingSongNumber === songNumber) {
             $(this).html(playButtonTemplate);
@@ -126,7 +127,7 @@ var setCurrentAlbum = function (album) {
 };
 
 var getSongNumberCell = function (number) {
-      var songNumberInfo = []
+      var songNumberInfo = [];
       number++;
       if (number > currentAlbum.songs.length) {
           number = 1;
@@ -141,45 +142,50 @@ var trackIndex = function(album, song) {
     return album.songs.indexOf(song);
 };
 
-var nextSong = function () {
-    var prevSong = trackIndex(currentAlbum, currentSongFromAlbum);
-    var currSong = trackIndex(currentAlbum, currentSongFromAlbum) + 1;
-    if (currSong === currentAlbum.songs.length) {
-        currSong = 0;
+// Former next() and previous() methods are factored into a single function
+// that returns a closure.
+var nextPrevClickFactory = function (step) {
+    var compareVal;
+    var resetVal;
+
+    if (step === 1) {
+        compareVal = currentAlbum.songs.length;
+        resetVal = 0;
     }
-    setSong(currSong);
-    updatePlayerBarSong();
+    else {
+        compareVal = -1;
+        resetVal = currentAlbum.songs.length - 1;
+    }
 
-    // Array indexing is zero-based while the visible song numbers are not. Code
-    // below takes care of the difference.
-    var currSongCell = getSongNumberCell(currSong)[0];
-    var prevSongCell = getSongNumberCell(prevSong)[0];
-    var incPrevSong =  getSongNumberCell(prevSong)[1];
+    var gotoSong = function () {
+        var prevSong = trackIndex(currentAlbum, currentSongFromAlbum);
+        var currSong = trackIndex(currentAlbum, currentSongFromAlbum) + step;
+        var setSong = setSongFactory(0);
 
-    $(currSongCell).html(pauseButtonTemplate);
-    $(prevSongCell).html(incPrevSong);
+        if (currSong === compareVal) {
+            currSong = resetVal;
+        }
+        setSong(currSong);
+        updatePlayerBarSong();
+
+        // Array indexing is zero-based while the visible song numbers are not. Code
+        // below takes care of the difference.
+        var currSongCell = getSongNumberCell(currSong)[0];
+        var prevSongCell = getSongNumberCell(prevSong)[0];
+        var incPrevSong =  getSongNumberCell(prevSong)[1];
+
+        $(currSongCell).html(pauseButtonTemplate);
+        $(prevSongCell).html(incPrevSong);
+    };
+    return gotoSong;
+
 };
 
-var previousSong = function () {
-    var prevSong = trackIndex(currentAlbum, currentSongFromAlbum);
-    var currSong = trackIndex(currentAlbum, currentSongFromAlbum) - 1;
-    if (currSong === -1) {
-        currSong = currentAlbum.songs.length - 1;
-    }
-    setSong(currSong);
-    updatePlayerBarSong();
-    // Array indexing is zero-based while the visible song numbers are not. Code
-    // below takes care of the difference.
-    var currSongCell = getSongNumberCell(currSong)[0];
-    var prevSongCell = getSongNumberCell(prevSong)[0];
-    var incPrevSong =  getSongNumberCell(prevSong)[1];
-
-    $(currSongCell).html(pauseButtonTemplate);
-    $(prevSongCell).html(incPrevSong);
-};
-
+//var x = currentAlbum.songs.length;
 $(document).ready(function() {
     setCurrentAlbum(albumPicasso);
+    var nextSong = nextPrevClickFactory(1);
+    var previousSong = nextPrevClickFactory(-1);
     $nextButton.click(nextSong);
     $previousButton.click(previousSong);
 });
