@@ -93,6 +93,14 @@
   top: 0.5rem;
 }
 
+.seek-bar {
+  height: 0.25rem;
+  background-color: rgba(255, 255,255, 0.3);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
 .seek-bar .fill {
   background-color: white;
   width: 36%;
@@ -127,7 +135,7 @@
   margin-left: -0.5rem;
 }
 
-player-bar .volume {
+.player-bar .volume {
   width: 25%;
   text-align: right;
 }
@@ -145,7 +153,7 @@ player-bar .volume {
 }
 
 @media (max-width: 640px) {
-  .player-br {
+  .player-bar {
     padding: 1rem;
     background-color: rgba(0, 0, 0, 0.6);
   }
@@ -162,7 +170,7 @@ player-bar .volume {
 }
 
 .player-bar .main-controls,
-.player-bar volume {
+.player-bar .volume {
   min-height: 3.5rem;
 }
 

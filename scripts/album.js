@@ -157,19 +157,6 @@ var setCurrentAlbum = function (album) {
     });
 };
 
-var updateSeekBarWhileSongPlays = function () {
-    if (currenSoundFile) {
-        // #10
-        currentSoundFile.bind('timeupdate', function (event) {
-            //#11
-            var seekBarFillRatio = this.getTime() / this.getDuration();
-            var $seekBar = $('.seek-control .seek-bar');
-
-            updateSeekPercentage($seekBar, seekBarFillRatio);
-        });
-    }
-};
-
 var updateSeekPercentage = function($seekBar, seekBarFillRatio) {
     var offsetXPercent = seekBarFillRatio * 100;
     // #1
@@ -180,6 +167,19 @@ var updateSeekPercentage = function($seekBar, seekBarFillRatio) {
     var percentageString = offsetXPercent + '%';
     $seekBar.find('.fill').width(percentageString);
     $seekBar.find('.thumb').css({left: percentageString});
+};
+
+var updateSeekBarWhileSongPlays = function () {
+    if (currentSoundFile) {
+        // #10
+        currentSoundFile.bind('timeupdate', function (event) {
+            //#11
+            var seekBarFillRatio = this.getTime() / this.getDuration();
+            var $seekBar = $('.seek-control .seek-bar');
+
+            updateSeekPercentage($seekBar, seekBarFillRatio);
+        });
+    }
 };
 
 var setupSeekBars = function () {
@@ -196,44 +196,36 @@ var setupSeekBars = function () {
         updateSeekPercentage($(this), seekBarFillRatio);
     });
 
-    // #7
+    $seekBars.find('.thumb').mousedown(function(event) {
+          // #8
+          var $seekBar = $(this).parent();
 
-    $seekBars.find('.thumb').mouseDown(function (event) {
-        // #8
-        var $seekBar = $(this).parent();
+          // #9
+          $(document).bind('mousemove.thumb', function (event) {
+              var offsetX = event.pageX - $seekBar.offset().left;
+              var barWidth = $seekBar.width();
+              var seekBarFillRatio = offsetX / barWidth;
+              if ($seekBar.hasClass('.player-bar')) {
+                  seek(seekBarFillRatio * 100);
+              }
+              else {
+                  setVolume(seekBarFillRatio * 100);
+              }
+              updateSeekPercentage($seekBar, seekBarFillRatio);
+          });
 
-        // #9
-        $(document).bind('mousemove.thumb', function (event) {
-            var offsetX = event.pageX - $seekBar.offset().left;
-            var barWidth = $seekBar.width();
-            var seekBarFillRatio = offsetX / barWidth;
-/*
-            if ($seekBar.hasClass('.player-bar')) {
-                seek(seekBarFillRatio);
-            }
-            else {
-                setVolume(seekBarFillRatio);
-            }
-            */
-            updateSeekPercentage($seekBar, seekBarFillRatio);
-       });
-
-        // #10
-        $(document).bind('mouseup.thumb', function () {
-            $(document).unbind('mousemove.thumb');
-            $(document).unbind('mouseup.thumb');
-            /*
-            if ($seekBar.hasClass('.player-bar')) {
-                seek(seekBarFillRatio);
-            }
-            else {
-                setVolume(seekBarFillRatio);
-            }
-            */
-        });
-
+          // #10
+          $(document).bind('mouseup.thumb', function() {
+              $(document).unbind('mousemove.thumb');
+              $(document).unbind('mouseup.thumb');
+              if ($seekBar.hasClass('.player-bar')) {
+                  seek(seekBarFillRatio * 100);
+              }
+              else {
+                  setVolume(seekBarFillRatio * 100);
+              }
+          });
     });
-
 }
 
 var getSongNumberCell = function (number) {
@@ -277,8 +269,8 @@ var nextPrevClickFactory = function (step) {
         }
         setSong(currSong);
         currentSoundFile.play();
-        updateSeekBarWhileSongPlays();
         updatePlayerBarSong();
+        updateSeekBarWhileSongPlays();
 
         // Array indexing is zero-based while the visible song numbers are not. Code
         // below takes care of the difference.
@@ -320,7 +312,7 @@ var togglePlayFromPlayerBar = function () {
 //var x = currentAlbum.songs.length;
 $(document).ready(function() {
     setCurrentAlbum(albumPicasso);
-//    setupSeekBars();
+    setupSeekBars();
     var nextSong = nextPrevClickFactory(1);
     var previousSong = nextPrevClickFactory(-1);
     var playPauseBarSelector = $('.main-controls .play-pause');
