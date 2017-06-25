@@ -9,18 +9,34 @@ var currentAlbum = null;
 var currentlyPlayingSongNumber = null;
 var currentSongFromAlbum = null;
 var currentArtistFromAlbum = null;
+var currentSoundFile = null;
+var currentVolume = 80;
 
 var $oneButton = $('.main-controls .play-pause');
 var $previousButton = $('.main-controls .previous');
 var $nextButton = $('.main-controls .next');
 
+var setVolume = function (volume) {
+    if (currentSoundFile) {
+        currentSoundFile.setVolume(volume);
+    }
+}
+
 // Slightly different versions of setSong are needed depending on where it's called.
 // Pass a 1 for the version in the ClickHandler of CreateSongRow, a zero for the
-// next and previous buttons on the navigation var. 
+// next and previous buttons on the navigation var.*
 var setSongFactory = function (subOne) {
     var setSong = function(songNumber) {
-        currentlyPlayingSongNumber = songNumber;
+        if (currentSoundFile) {
+            currentSoundFile.stop();
+        }
+        currentlyPlayingSongNumber = parseInt(songNumber);
         currentSongFromAlbum = currentAlbum.songs[songNumber - subOne];
+        currentSoundFile = new buzz.sound(currentSongFromAlbum.audioUrl, {
+            formats: [ 'mp3' ],
+            preload: true
+        });
+        setVolume(currentVolume);
     };
     return setSong;
 };
@@ -67,14 +83,22 @@ var createSongRow = function(songNumber, songName, songLength) {
         else {
             $(this.parentElement).find('.song-item-number').html(pauseButtonTemplate);
         }
-        // New code - checkpoint 19
+
         var songNumber = parseInt($(this).attr('data-song-number'));
         if (currentlyPlayingSongNumber !== songNumber) {
             $(this).html(pauseButtonTemplate);
             setSong(songNumber);
+            currentSoundFile.play();
         }
         else if (currentlyPlayingSongNumber === songNumber) {
-            $(this).html(playButtonTemplate);
+            if (currentSoundFile.isPaused()) {
+                $(this).html(pausedButtonTemplate);
+                currentSoundFile.play();
+            }
+            else {
+                $(this).html(playButtonTemplate);
+                currentSoundFile.pause();
+            }
             $('.main-controls .play-pause').html(playerBarPlayButton);
             setSong(null);
         }
@@ -166,6 +190,7 @@ var nextPrevClickFactory = function (step) {
             currSong = resetVal;
         }
         setSong(currSong);
+        currentSoundFile.play();
         updatePlayerBarSong();
 
         // Array indexing is zero-based while the visible song numbers are not. Code
@@ -181,11 +206,37 @@ var nextPrevClickFactory = function (step) {
 
 };
 
+var togglePlayFromPlayerBar = function () {
+    var currSong;
+    var currSongCell;
+    var setSong = setSongFactory(0);
+    if ($('.main-controls .play-pause').html() === playerBarPlayButton) {
+        $('.main-controls .play-pause').html(playerBarPauseButton);
+        currSong = trackIndex(currentAlbum, currentSongFromAlbum);
+        if (currSong === -1) {
+            currSong = 0;
+            setSong(currSong);
+        }
+        currSongCell = getSongNumberCell(currSong)[0];
+        $(currSongCell).html(pauseButtonTemplate);
+        currentSoundFile.play();
+    }
+    else {
+        $('.main-controls .play-pause').html(playerBarPlayButton);
+        currSong = trackIndex(currentAlbum, currentSongFromAlbum);
+        currSongCell = getSongNumberCell(currSong)[0];
+        $(currSongCell).html(playButtonTemplate);
+        currentSoundFile.pause();
+    }
+}
+
 //var x = currentAlbum.songs.length;
 $(document).ready(function() {
     setCurrentAlbum(albumPicasso);
     var nextSong = nextPrevClickFactory(1);
     var previousSong = nextPrevClickFactory(-1);
+    var playPauseBarSelector = $('.main-controls .play-pause');
     $nextButton.click(nextSong);
     $previousButton.click(previousSong);
+    playPauseBarSelector.click(togglePlayFromPlayerBar);
 });
