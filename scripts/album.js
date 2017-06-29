@@ -16,6 +16,14 @@ var $oneButton = $('.main-controls .play-pause');
 var $previousButton = $('.main-controls .previous');
 var $nextButton = $('.main-controls .next');
 
+var setCurrentTimeInPlayerBar = function (currentTime) {
+    $('.current-time').html(currentTime);
+};
+
+var setTotalTimeInPlayerBar = function (totalTime) {
+    $('.total-time').html(totalTime);
+};
+
 var seek = function (time) {
     if (currentSoundFile) {
         currentSoundFile.setTime(time);
@@ -47,8 +55,18 @@ var setSongFactory = function (subOne) {
     return setSong;
 };
 
+var filterTimeCode = function (timeInSeconds) {
+    var timeInSecondsFloat = parseFloat(timeInSeconds);
+    var minutes = Math.floor(timeInSecondsFloat / 60);
+    var seconds = Math.round(timeInSecondsFloat - (minutes * 60));
+    seconds = (seconds < 10 ) ? "0" + seconds : seconds;
+    var colonTime = minutes + ":" + seconds;
+    return colonTime;
+};
+
 // Updates the text of the h2 tags
 var updatePlayerBarSong = function () {
+    setTotalTimeInPlayerBar();
     $('.song-name').html(currentSongFromAlbum.title);
     $('.artist-song-mobile').html(currentSongFromAlbum.title);
     $('.main-controls .play-pause').html(playerBarPauseButton);
@@ -59,7 +77,7 @@ var createSongRow = function(songNumber, songName, songLength) {
       '<tr class="album-view-song-item">'
     + '  <td class="song-item-number" data-song-number="' + songNumber + '">' + songNumber + '</td>'
     + '  <td class="song-item-title">' + songName + '</td>'
-    + '  <td class="song-item-duration">' + songLength + '</td>'
+    + '  <td class="song-item-setupSeekBars">' + filterTimeCode(songLength) + '</td>'
     + '</tr>'
     ;
     var $row = $(template);
@@ -176,11 +194,24 @@ var updateSeekBarWhileSongPlays = function () {
             //#11
             var seekBarFillRatio = this.getTime() / this.getDuration();
             var $seekBar = $('.seek-control .seek-bar');
-
+            setCurrentTimeInPlayerBar(filterTimeCode(this.getTime().toString()));
+            setTotalTimeInPlayerBar(filterTimeCode(this.getDuration().toString()));
             updateSeekPercentage($seekBar, seekBarFillRatio);
         });
     }
 };
+
+function hasClass( target, className ) {
+    return new RegExp('(\\s|^)' + className + '(\\s|$)').test(target.className);
+}
+
+function getAllProperties(obj) {
+  var properties = '';
+  for (property in obj) {
+    properties += '\n' + property;
+  }
+  alert('Properties of object:' + properties);
+}
 
 var setupSeekBars = function () {
     var $seekBars = $('.player-bar .seek-bar');
@@ -199,19 +230,19 @@ var setupSeekBars = function () {
     $seekBars.find('.thumb').mousedown(function(event) {
           // #8
           var $seekBar = $(this).parent();
-
+         //var $seekBar = $(this);
           // #9
           $(document).bind('mousemove.thumb', function (event) {
               var offsetX = event.pageX - $seekBar.offset().left;
               var barWidth = $seekBar.width();
               var seekBarFillRatio = offsetX / barWidth;
-              if ($seekBar.hasClass('.player-bar')) {
+              updateSeekPercentage($seekBar, seekBarFillRatio);
+              if (barWidth > 92) {
                   seek(seekBarFillRatio * 100);
               }
               else {
                   setVolume(seekBarFillRatio * 100);
               }
-              updateSeekPercentage($seekBar, seekBarFillRatio);
           });
 
           // #10
